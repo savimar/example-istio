@@ -1,0 +1,70 @@
+minikube start --no-vtx-check --driver=virtualbox --cpus=8 --memory=12g --cni=flannel --extra-config=apiserver.enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass, DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,PodPreset --extra-config=apiserver.authorization-mode=Node,RBAC --kubernetes-version="v1.19.0"
+
+minikube start --driver=hyperv  --cpus=8 --memory=12g --cni=flannel --extra-config=apiserver.enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass, DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,PodPreset --extra-config=apiserver.authorization-mode=Node,RBAC --kubernetes-version="v1.19.0"             
+
+cd C:\Users\Maria\Downloads\otus-demo-istio-master\otus-demo-istio-master
+kubectl apply -f namespaces.yaml
+
+helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
+helm repo update
+
+helm install --version "2.19.0" -n jaeger-operator -f jaeger/operator-values.yaml jaeger-operator jaegertracing/jaeger-operator
+
+kubectl apply -f jaeger/jaeger.yaml
+
+kubectl get po -n jaeger -l app.kubernetes.io/instance=jaeger
+
+minikube service -n jaeger jaeger-query-nodeport
+
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add stable https://charts.helm.sh/stable
+
+ helm repo update
+
+ helm install --version "13.7.2" -n monitoring -f prometheus/operator-values.yaml prometheus prometheus-community/kube-prometheus-stack
+ kubectl get po -n monitoring
+ kubectl apply -f prometheus/monitoring-nodeport.yaml
+ minikube service -n monitoring prometheus-grafana-nodeport
+
+ kubectl get all --all-namespaces
+
+ istioctl operator init --watchedNamespaces istio-system --operatorNamespace istio-operator
+ kubectl apply -f istio/istio.yaml
+
+
+ helm repo add kiali https://kiali.org/helm-charts
+ helm repo update
+
+ helm install --version "1.33.1" -n kiali-operator kiali-operator kiali/kiali-operator --set image.tag=v1.33.1
+ kubectl apply -f kiali/kiali.yaml
+ kubectl get po -n kiali -l app.kubernetes.io/name=kiali
+ minikube service -n kiali kiali-nodeport
+
+
+  docker-env && docker build -t proxy-app:latest -f app/src/Dockerfile app/src
+  kubectl apply -f app/echoserver.yaml
+  curl $(minikube service echoserver --url)
+
+
+  kubectl apply -f app/proxy-app.yaml
+  kubectl get po -l "app=proxy-app"
+  curl $(minikube service proxy-app --url)
+  kubectl logs -l app=proxy-app -c proxy-app
+
+  нагрузочный образ
+  docker build -t load-otus-demo:latest -f app/load/Dockerfile app/load
+  docker tag load-otus-demo savimar/load-otus-demo:load
+  docker push  savimar/load-otus-demo:load
+
+  kubectl apply -f app/load.yaml
+
+  istioctl install --set profile=default -y
+   kubectl edit svc istio-ingressgateway -n istio-system
+
+
+
+   curl "$(minikube service proxy-app --url)?url=http://echoserver"
+
+   kubectl apply -f C:\Users\Maria\Downloads\otus-homework-istio-master\otus-homework-istio-master\istio\istiogatway.yaml
+   minikube service -n istio-system istio-ingressgateway 

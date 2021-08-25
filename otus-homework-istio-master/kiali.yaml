@@ -1,0 +1,173 @@
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+  creationTimestamp: "2021-08-13T16:36:41Z"
+  generation: 1
+  labels:
+    app: kiali
+    app.kubernetes.io/instance: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/part-of: kiali
+    app.kubernetes.io/version: v1.33.1
+    version: v1.38.1
+  name: kiali
+  namespace: kiali
+  ownerReferences:
+  - apiVersion: kiali.io/v1alpha1
+    kind: Kiali
+    name: kiali
+    uid: 589aa807-f219-4cc8-8709-684247e501e2
+  resourceVersion: "106604"
+  uid: 969c627d-6770-4813-b405-befc25b51034
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: kiali
+      app.kubernetes.io/name: kiali
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kiali.io/dashboards: go,kiali
+        operator.kiali.io/last-updated: Fri Aug 13 16:35:58 UTC 2021
+        prometheus.io/port: "9090"
+        prometheus.io/scrape: "true"
+      creationTimestamp: null
+      labels:
+        app: kiali
+        app.kubernetes.io/instance: kiali
+        app.kubernetes.io/name: kiali
+        app.kubernetes.io/part-of: kiali
+        app.kubernetes.io/version: v1.33.1
+        version: v1.33.1
+      name: kiali
+    spec:
+      containers:
+      - command:
+        - /opt/kiali/kiali
+        - -config
+        - /kiali-configuration/config.yaml
+        env:
+        - name: ACTIVE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: LOG_FORMAT
+          value: text
+        - name: LOG_LEVEL
+          value: info
+        - name: LOG_SAMPLER_RATE
+          value: "1"
+        - name: LOG_TIME_FIELD_FORMAT
+          value: 2006-01-02T15:04:05Z07:00
+        - name: LOGIN_TOKEN_SIGNING_KEY
+          valueFrom:
+            secretKeyRef:
+              key: key
+              name: kiali-signing-key
+        image: quay.io/kiali/kiali:v1.33.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /kiali/healthz
+            port: api-port
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: kiali
+        ports:
+        - containerPort: 20001
+          name: api-port
+          protocol: TCP
+        - containerPort: 9090
+          name: http-metrics
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /kiali/healthz
+            port: api-port
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /kiali-configuration
+          name: kiali-configuration
+        - mountPath: /kiali-cert
+          name: kiali-cert
+        - mountPath: /kiali-secret
+          name: kiali-secret
+        - mountPath: /kiali-cabundle
+          name: kiali-cabundle
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: kiali-service-account
+      serviceAccountName: kiali-service-account
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: kiali
+        name: kiali-configuration
+      - name: kiali-cert
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: istio.kiali-service-account
+      - name: kiali-secret
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: kiali
+      - configMap:
+          defaultMode: 420
+          name: kiali-cabundle
+          optional: true
+        name: kiali-cabundle
+status:
+  conditions:
+  - lastTransitionTime: "2021-08-13T16:36:41Z"
+    lastUpdateTime: "2021-08-13T16:36:41Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2021-08-13T16:46:43Z"
+    lastUpdateTime: "2021-08-13T16:46:43Z"
+    message: ReplicaSet "kiali-fc76855b6" has timed out progressing.
+    reason: ProgressDeadlineExceeded
+    status: "False"
+    type: Progressing
+  observedGeneration: 1
+  replicas: 1
+  unavailableReplicas: 1
+  updatedReplicas: 1
